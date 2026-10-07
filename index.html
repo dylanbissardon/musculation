@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#111827"><meta name="apple-mobile-web-app-capable" content="yes"><title>Muscu</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f3f4f6;color:#111827;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.app{max-width:700px;margin:auto;padding:16px 14px 40px}header{display:flex;justify-content:space-between;align-items:center;margin:8px 0 18px}h1{font-size:28px;margin:0}h2{font-size:19px;margin:4px 0 16px}.ey{font-size:11px;letter-spacing:.12em;font-weight:800;color:#6b7280}.card{background:#fff;border:1px solid #e5e7eb;border-radius:18px;padding:17px;margin:13px 0;box-shadow:0 2px 8px #00000008}label{font-size:13px;font-weight:700;display:block;margin-bottom:7px}select{width:100%;padding:13px;border:1px solid #d1d5db;border-radius:12px;background:#fff;font:inherit}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.equip{padding:14px;border:1px solid #e5e7eb;border-radius:14px;background:#fafafa}.equip.sel{border-color:#111827}.name{font-weight:800}.res{font-size:25px;font-weight:850;margin-top:6px}.sub,.hint{font-size:12px;color:#6b7280}.box{background:#f3f4f6;border-radius:15px;padding:20px;text-align:center;margin:16px 0}.big{font-size:42px;font-weight:900}.controls{display:flex;align-items:center;justify-content:center;gap:20px}.round{width:42px;height:42px;border-radius:50%;border:1px solid #d1d5db;background:#fff;font-size:25px}.primary{width:100%;border:0;border-radius:13px;background:#111827;color:#fff;font:inherit;font-weight:800;padding:14px}.feedback{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.feedback button{padding:16px 6px;border:1px solid #e5e7eb;background:#fff;border-radius:14px;font-weight:800}.next{background:#f3f4f6;border-radius:14px;padding:16px}.next strong{font-size:34px;display:block}.hidden{display:none}.history{font-size:13px}.row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #eee}.danger{border:0;background:none;color:#6b7280;font-size:12px}.ok{color:#15803d;font-weight:800}
+@media(max-width:480px){.grid{grid-template-columns:1fr}}
+</style></head>
+<body><main class="app">
+<header><div><div class="ey">MUSCULATION</div><h1>Résistance adaptative</h1></div><button id="reset" class="danger">Réinitialiser</button></header>
+<section class="card"><label>Exercice</label><select id="ex"></select></section>
+<section id="recs" class="card hidden"><div class="ey">POUR CET EXERCICE</div><h2>Résistances conseillées</h2><div id="grid" class="grid"></div></section>
+<section id="work" class="card hidden"><div class="ey">SÉANCE</div><h2 id="title"></h2><label>Équipement</label><select id="eq"></select><div class="box"><div class="ey">RÉSISTANCE</div><div class="controls"><button id="minus" class="round">−</button><div><div id="res" class="big">—</div><div class="hint">niveau réalisable</div></div><button id="plus" class="round">+</button></div></div><button id="start" class="primary">Enregistrer cette séance</button></section>
+<section id="feedback" class="card hidden"><div class="ey">RESSENTI</div><h2>Comment c'était ?</h2><p class="hint">Le choix sert à calculer automatiquement la prochaine résistance.</p><div class="feedback"><button data-r="easy">🟢<br>Facile</button><button data-r="hard">🟠<br>Difficile</button><button data-r="impossible">🔴<br>Impossible</button></div></section>
+<section id="result" class="card hidden"><div class="ok">✓ Séance enregistrée</div><h2>Prochaine fois</h2><div class="next"><strong id="next"></strong><span id="why" class="hint"></span></div></section>
+<section id="hist" class="card hidden"><div class="ey">HISTORIQUE</div><h2>Dernières séances</h2><div id="history" class="history"></div></section>
+</main>
+<script>
+const raw=`Abduction De Hanches|Poignées|20
+Abductions Latérales|Booty|3
+Adduction De Hanches|Poignées|10
+Crab Walk|Booty|3
+Crunch À La Poulie Haute|Poignées|40
+Cuban Press|Poignées|20
+Curl Biceps|Barre|30
+Curl Biceps|Poignées|40
+Curl Biceps|SmartPress|50
+Curl Biceps|Bandes|60
+Curl Biceps (Poulie Basse)|Poignées|30
+Curl Biceps En Pronation|Barre|35
+Curl Biceps Face À La Porte|Barre|30
+Curl Biceps Prise Marteau|Elastiques|35
+Curl Biceps Prise Marteau|Bandes|60
+Curl Marteau (Poulie Basse)|Poignées|35
+Curl Marteau Unilatéral|Bandes|60
+Curl Supination Face|Bandes|60
+Curl Supination Unilatéral|Bandes|60
+Développé Arnold|Poignées|25
+Développé Debout|Barre|35
+Développé Debout|SmartPress|45
+Développé Debout (2 Ancrages)|Poignées|30
+Développé Debout (Poulie Moyenne)|Barre|40
+Développé Décliné|Barre|40
+Développé Incliné|Barre|40
+Développé Incliné|SmartPress|50
+Développé Joint (Poulie Basse)|Poignées|25
+Développé Joint (Poulie Haute)|Poignées|30
+Développé Joint (Poulie Moyenne)|Poignées|25
+Développé Militaire|Barre|30
+Développé Militaire|Poignées|35
+Développé Militaire|Bandes|60
+Donkey Kick|Poignées|20
+Donkey Kick (Jambes Fléchies)|Poignées|25
+Écarté Unilatéral (Poulie Basse)|Poignées|20
+Écarté Unilatéral (Poulie Haute)|Poignées|20
+Écarté Unilatéral (Poulie Moyenne)|Poignées|20
+Élévation Frontale Marteau|Bandes|30
+Élévation Latérale|Poignées|20
+Élévation Latérale|Bandes|30
+Élévation Latérale Unilatérale|Bandes|30
+Élévations Frontales|Poignées|25
+Extension Triceps (Poulie Haute)|Elastiques|35
+Extension Triceps Nuque Unilatérale|Bandes|30
+Extension Triceps Unilatérale|Bandes|30
+Extension Triceps Verticale|Poignées|20
+Extension Triceps Verticale (Poulie Basse)|Poignées|20
+Face Pull (Poulie Basse)|Poignées|25
+Face Pull (Poulie Haute)|Poignées|30
+Fentes|Barre|40
+Fentes|SmartPress|50
+Fentes|Bandes|60
+Fentes Alternées|Booty|3
+Fentes Arrière|Bandes|30
+Fentes Bulgares|Barre|30
+Fentes Bulgares|Bandes|60
+Fire hydrants|Booty|3
+Front Squat|Barre|35
+Good Morning|Barre|40
+Hip Thrust|Barre|50
+Hip Thrust|SmartPress|50
+Hip Thrust|Bandes|30
+Hip Thrust|Booty|3
+Kickback|Booty|3
+Kickback Triceps (Poulie Basse)|Elastiques|20
+Kickback Triceps Unilatéral|Elastiques|20
+Leg Curl (Poulie Basse)|Poignées|30
+Leg Extension Unilatérale|Poignées|25
+Leg Press|SmartPress|50
+Oiseau|Poignées|25
+Oiseau Debout Face|Bandes|20
+Pompes Lestées|Elastiques|25
+Pompes Lestées|SmartPress|50
+Pompes Lestées|Bandes|30
+Pull Over (Poulie Haute)|Barre|30
+Relevé De Bassin Iso Avec Abduction|Booty|3
+Reverse Fly (Poulie Moyenne)|Poignées|20
+Reverse Fly Unilatéral (Poulie Moyenne)|Poignées|15
+Rowing Buste Penché (Prise Large)|Barre|30
+Rowing Buste Penché (Prise Supination)|Barre|25
+SmartPress Crossover|SmartPress|50
+Soulevé De Terre|Barre|50
+Soulevé De Terre|SmartPress|50
+Soulevé De Terre|Bandes|30
+Soulevé De Terre (Prise Large)|Barre|45
+Soulevé De Terre Sumo Face|Bandes|50
+Spiderman|Poignées|20
+Squat|Barre|45
+Squat|Bandes|60
+Squat|Booty|3
+Squat Sumo|Barre|30
+Thruster|Barre|25
+Thruster|Bandes|30
+Tirage Bucheron (Poulie Basse)|Poignées|35
+Tirage Buste Penché|Bandes|30
+Tirage Horizontal|SmartPress|35
+Tirage Horizontal|Bandes|30
+Tirage Horizontal Unilatéral|Elastiques|30
+Tirage Horizontal Unilatéral|Bandes|30
+Tirage Menton|Barre|25
+Tirage Menton|SmartPress|35
+Tirage Poulie Basse|Barre|25
+Tirage Poulie Basse (Supination)|Barre|30
+Tirage Vertical (Poulie Haute)|Barre|25
+Tirage Vertical (Prise Serrée)|Poignées|30
+Tirage Vertical (Supination)|Barre|30
+Tirage Vertical Unilatéral|Poignées|20
+Tirage Vertical Unilatéral Face|Bandes|30`;
+const equip={Barre:[5,10,15,20,20,25,25],Poignées:[5,10,15,20,20,25,25],Elastiques:[5,10,15,20,20,25,25],SmartPress:[16,28,36],Bandes:[15,30,40],Booty:[1,2,3]};
+const cumul={Barre:true,Poignées:true,Elastiques:true,SmartPress:true,Bandes:true,Booty:false};
+const exs={};raw.trim().split("\n").forEach(x=>{let[a,b,c]=x.split("|");(exs[a]??=[]).push({e:b,b:+c})});
+const names=Object.keys(exs), key="muscu-v2", saved=JSON.parse(localStorage.getItem(key)||"{}");let cur={ex:saved.ex||names[0],eq:saved.eq||null,r:saved.r||null,active:false};
+const $=id=>document.getElementById(id), vals=e=>{if(!cumul[e])return equip[e].slice().sort((a,b)=>a-b);let s=new Set([0]);for(const v of equip[e])for(const x of [...s])s.add(x+v);return [...s].filter(x=>x).sort((a,b)=>a-b)};
+function base(e){return exs[cur.ex].find(x=>x.e===e)?.b}
+function rec(e){let h=(saved.history||[]).filter(x=>x.ex===cur.ex&&x.eq===e).sort((a,b)=>b.date.localeCompare(a.date))[0];return h?h.next:nearest(base(e),e)}
+function nearest(n,e){let v=vals(e);return v.reduce((a,x)=>Math.abs(x-n)<Math.abs(a-n)?x:a,v[0])}
+function save(){saved.ex=cur.ex;saved.eq=cur.eq;saved.r=cur.r;saved.history=saved.history||[];localStorage.setItem(key,JSON.stringify(saved))}
+function render(){let options=names.map(n=>'<option>'+n+'</option>').join("");$("ex").innerHTML=options;$("ex").value=cur.ex;$("recs").classList.remove("hidden");$("grid").innerHTML=exs[cur.ex].map(x=>'<div class="equip '+(cur.eq===x.e?'sel':'')+'" data-e="'+x.e+'"><div class="name">'+x.e+'</div><div class="sub">Conseillée</div><div class="res">'+rec(x.e)+'</div></div>').join("");document.querySelectorAll(".equip").forEach(x=>x.onclick=()=>{cur.eq=x.dataset.e;cur.r=rec(cur.eq);save();render();$("work").scrollIntoView({behavior:"smooth"})});if(cur.eq){$("work").classList.remove("hidden");$("title").textContent=cur.ex;$("eq").innerHTML=exs[cur.ex].map(x=>'<option>'+x.e+'</option>').join("");$("eq").value=cur.eq;$("res").textContent=cur.r}else $("work").classList.add("hidden");historyRender()}
+function historyRender(){let h=(saved.history||[]).filter(x=>x.ex===cur.ex).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,8);$("hist").classList.toggle("hidden",!h.length);$("history").innerHTML=h.map(x=>'<div class="row"><span>'+x.eq+'<br><small>'+new Date(x.date).toLocaleDateString("fr-FR")+'</small></span><strong>'+x.r+' → '+x.next+'</strong></div>').join("")}
+$("ex").onchange=e=>{cur={ex:e.target.value,eq:null,r:null,active:false};save();render()};$("eq").onchange=e=>{cur.eq=e.target.value;cur.r=rec(cur.eq);save();render()};$("minus").onclick=()=>{let v=vals(cur.eq),i=v.findIndex(x=>x>=cur.r);cur.r=v[Math.max(0,i-1)];save();render()};$("plus").onclick=()=>{let v=vals(cur.eq),i=v.findIndex(x=>x>=cur.r);cur.r=v[Math.min(v.length-1,i+1)];save();render()};$("start").onclick=()=>{$("feedback").classList.remove("hidden");$("feedback").scrollIntoView({behavior:"smooth"})};document.querySelectorAll("[data-r]").forEach(b=>b.onclick=()=>{let v=vals(cur.eq),i=v.findIndex(x=>x>=cur.r),n=cur.r,w=b.dataset.r;if(w==="easy")n=v[i+1]??cur.r;if(w==="impossible")n=v[Math.max(0,i-1)];saved.history=saved.history||[];saved.history.push({date:new Date().toISOString(),ex:cur.ex,eq:cur.eq,r:cur.r,next:n,result:w});cur.r=n;save();$("next").textContent=n;$("why").textContent=w==="easy"?"Facile : +1 niveau.":w==="impossible"?"Impossible : −1 niveau.":"Difficile : même résistance.";$("result").classList.remove("hidden");$("feedback").classList.add("hidden");render();$("result").scrollIntoView({behavior:"smooth"})});$("reset").onclick=()=>{if(confirm("Effacer tout l'historique ?")){saved.history=[];save();render()}};render();
+</script></body></html>
