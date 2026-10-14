@@ -17,6 +17,16 @@ Dans **Authentication → URL Configuration** :
 
 La table `public.workout_history` doit exister avec les politiques RLS de lecture, insertion et suppression limitées à `auth.uid() = user_id`. Le navigateur utilise uniquement la clé publishable publique ; ne jamais mettre une clé `service_role` dans le site.
 
+## Connexion iPhone depuis l’écran d’accueil
+
+Pour éviter que le lien magique ouvre Safari dans un contexte séparé de l’application installée, la V3 utilise un code e-mail à saisir directement dans Muscu.
+
+Dans **Authentication → Email Templates → Magic Link**, configure le contenu du courriel pour afficher le code, par exemple :
+
+`Ton code de connexion Muscu : {{ .Token }}`
+
+Enregistre le modèle. Dans Muscu, demande ensuite un code et saisis-le dans le champ prévu, sans cliquer sur le lien magique de l’e-mail.
+
 ## Installer sur iPhone
 1. Ouvrir `https://dylanbissardon.github.io/musculation/` dans Safari.
 2. Appuyer sur **Partager** puis **Sur l’écran d’accueil**.
