@@ -6,7 +6,7 @@
 @media(max-width:480px){header{align-items:flex-start}h1{font-size:24px}} .sync-status{font-size:13px;color:#4b5563;margin:8px 0}.sync-actions{display:flex;gap:8px;flex-wrap:wrap}.sync-actions input{flex:1;min-width:180px;padding:12px;border:1px solid #d1d5db;border-radius:12px;font:inherit}.secondary{border:1px solid #d1d5db;border-radius:12px;background:#fff;padding:12px;font:inherit;font-weight:700}.small{font-size:12px;color:#6b7280;line-height:1.5}</style><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script></head>
 <body><main class="app">
 <header><div><div class="ey">MUSCULATION</div><h1>Résistance adaptative</h1></div><button id="reset" class="danger">Réinitialiser</button></header>
-<section class="card"><div class="ey">SYNCHRONISATION</div><h2>Mac ↔ iPhone</h2><div id="syncStatus" class="sync-status">Historique enregistré sur cet appareil.</div><div id="loginArea"><label for="email">Ton adresse e-mail</label><div class="sync-actions"><input id="email" type="email" autocomplete="email" placeholder="toi@exemple.fr"><button id="login" class="secondary">Recevoir un code</button></div><div id="otpArea" class="hidden" style="margin-top:12px"><label for="otp">Code reçu par e-mail</label><div class="sync-actions"><input id="otp" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="Code de connexion"><button id="verifyOtp" class="secondary">Se connecter</button></div></div><p class="small">Pour que la connexion fonctionne aussi depuis l’icône de l’écran d’accueil sur iPhone, utilise le code reçu par e-mail et saisis-le ici, sans ouvrir le lien dans Safari.</p></div><div id="accountArea" class="hidden"><div id="accountEmail" class="small"></div><button id="logout" class="secondary">Se déconnecter</button></div></section>
+<section class="card"><div class="ey">SYNCHRONISATION</div><h2>Mac ↔ iPhone</h2><div id="syncStatus" class="sync-status">Historique enregistré sur cet appareil.</div><div id="loginArea"><label for="email">Ton adresse e-mail</label><input id="email" type="email" autocomplete="email" placeholder="toi@exemple.fr" style="width:100%;padding:12px;border:1px solid #d1d5db;border-radius:12px;font:inherit;margin-bottom:10px"><label for="password">Mot de passe</label><input id="password" type="password" autocomplete="current-password" placeholder="Au moins 8 caractères" style="width:100%;padding:12px;border:1px solid #d1d5db;border-radius:12px;font:inherit;margin-bottom:10px"><div class="sync-actions"><button id="login" class="secondary">Se connecter</button><button id="signup" class="secondary">Créer mon compte</button></div><p class="small">Utilise le même compte sur ton iPhone et ton Mac pour retrouver ton historique. Choisis un mot de passe solide et conserve-le en lieu sûr. La création du compte sans e-mail de confirmation nécessite de désactiver la confirmation des e-mails dans Supabase.</p></div><div id="accountArea" class="hidden"><div id="accountEmail" class="small"></div><button id="logout" class="secondary">Se déconnecter</button></div></section>
 <section class="card"><label>Exercice</label><select id="ex"></select></section>
 <section id="recs" class="card hidden"><div class="ey">POUR CET EXERCICE</div><h2>Résistances conseillées</h2><div id="grid" class="grid"></div></section>
 <section id="work" class="card hidden"><div class="ey">SÉANCE</div><h2 id="title"></h2><label>Équipement</label><select id="eq"></select><div class="box"><div class="ey">RÉSISTANCE</div><div class="controls"><button id="minus" class="round">−</button><div><div id="res" class="big">—</div><div class="hint">niveau réalisable</div></div><button id="plus" class="round">+</button></div></div><button id="start" class="primary">Enregistrer cette séance</button></section>
@@ -175,19 +175,25 @@ async function initCloud(){
   cloud.auth.onAuthStateChange(async(_event,session)=>{cloudUser=session?.user||null;showAccount(cloudUser);if(cloudUser)await loadCloudHistory();else status("Déconnecté — historique local conservé sur cet appareil.")});
  }catch(e){status("Mode local disponible. Vérifie la configuration Supabase si tu veux synchroniser.")}
 }
+async function credentials(){
+ const email=$("email").value.trim(),password=$("password").value;
+ if(!email||!password){status("Saisis ton adresse e-mail et ton mot de passe.");return null}
+ if(password.length<8){status("Choisis un mot de passe d’au moins 8 caractères.");return null}
+ return {email,password};
+}
 $("login").onclick=async()=>{
- const email=$("email").value.trim();if(!email){status("Saisis ton adresse e-mail.");return}
- $("login").disabled=true;status("Envoi du code de connexion…");
- try{const {error}=await cloud.auth.signInWithOtp({email,options:{shouldCreateUser:true}});if(error)throw error;$("otpArea").classList.remove("hidden");status("Code envoyé. Saisis le code reçu dans l’e-mail directement ici.");}
- catch(e){status("Envoi impossible : "+(e.message||"réessaie."))}
+ const creds=await credentials();if(!creds)return;
+ $("login").disabled=true;status("Connexion…");
+ try{const {data,error}=await cloud.auth.signInWithPassword(creds);if(error)throw error;cloudUser=data.user||data.session?.user||null;showAccount(cloudUser);if(cloudUser)await loadCloudHistory();status(cloudUser?"Connecté — historique synchronisé.":"Connexion effectuée.");}
+ catch(e){status("Connexion impossible : "+(e.message||"vérifie tes identifiants."))}
  finally{$("login").disabled=false}
 };
-$("verifyOtp").onclick=async()=>{
- const email=$("email").value.trim(),token=$("otp").value.trim();if(!email||!token){status("Saisis ton e-mail et le code reçu.");return}
- $("verifyOtp").disabled=true;status("Vérification du code…");
- try{const {data,error}=await cloud.auth.verifyOtp({email,token,type:"email"});if(error)throw error;cloudUser=data.user||data.session?.user||null;showAccount(cloudUser);if(cloudUser)await loadCloudHistory();status(cloudUser?"Connecté — historique synchronisé.":"Code accepté, mais session introuvable.");}
- catch(e){status("Code invalide ou expiré : "+(e.message||"demande un nouveau code."))}
- finally{$("verifyOtp").disabled=false}
+$("signup").onclick=async()=>{
+ const creds=await credentials();if(!creds)return;
+ $("signup").disabled=true;status("Création du compte…");
+ try{const {data,error}=await cloud.auth.signUp(creds);if(error)throw error;cloudUser=data.user&&data.session?data.user:null;showAccount(cloudUser);if(cloudUser){await loadCloudHistory();status("Compte créé — historique synchronisé.");}else{status("Compte créé, mais Supabase demande une confirmation par e-mail. Désactive la confirmation des e-mails dans les réglages d’authentification Supabase, puis réessaie.");}}
+ catch(e){status("Création impossible : "+(e.message||"réessaie."))}
+ finally{$("signup").disabled=false}
 };
 $("logout").onclick=async()=>{const {error}=await cloud.auth.signOut();if(error)status("Déconnexion impossible : "+error.message)};
 
