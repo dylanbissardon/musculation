@@ -1,11 +1,12 @@
 <!doctype html>
-<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#111827"><meta name="apple-mobile-web-app-capable" content="yes"><title>Muscu</title>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#111827"><meta name="apple-mobile-web-app-title" content="Muscu"><link rel="manifest" href="./manifest.webmanifest"><link rel="apple-touch-icon" href="./icon.svg"><meta name="apple-mobile-web-app-capable" content="yes"><title>Muscu</title>
 <style>
 *{box-sizing:border-box}body{margin:0;background:#f3f4f6;color:#111827;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.app{max-width:700px;margin:auto;padding:16px 14px 40px}header{display:flex;justify-content:space-between;align-items:center;margin:8px 0 18px}h1{font-size:28px;margin:0}h2{font-size:19px;margin:4px 0 16px}.ey{font-size:11px;letter-spacing:.12em;font-weight:800;color:#6b7280}.card{background:#fff;border:1px solid #e5e7eb;border-radius:18px;padding:17px;margin:13px 0;box-shadow:0 2px 8px #00000008}label{font-size:13px;font-weight:700;display:block;margin-bottom:7px}select{width:100%;padding:13px;border:1px solid #d1d5db;border-radius:12px;background:#fff;font:inherit}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.equip{padding:14px;border:1px solid #e5e7eb;border-radius:14px;background:#fafafa}.equip.sel{border-color:#111827}.name{font-weight:800}.res{font-size:25px;font-weight:850;margin-top:6px}.sub,.hint{font-size:12px;color:#6b7280}.box{background:#f3f4f6;border-radius:15px;padding:20px;text-align:center;margin:16px 0}.big{font-size:42px;font-weight:900}.controls{display:flex;align-items:center;justify-content:center;gap:20px}.round{width:42px;height:42px;border-radius:50%;border:1px solid #d1d5db;background:#fff;font-size:25px}.primary{width:100%;border:0;border-radius:13px;background:#111827;color:#fff;font:inherit;font-weight:800;padding:14px}.feedback{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.feedback button{padding:16px 6px;border:1px solid #e5e7eb;background:#fff;border-radius:14px;font-weight:800}.next{background:#f3f4f6;border-radius:14px;padding:16px}.next strong{font-size:34px;display:block}.hidden{display:none}.history{font-size:13px}.row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #eee}.danger{border:0;background:none;color:#6b7280;font-size:12px}.ok{color:#15803d;font-weight:800}
 @media(max-width:480px){.grid{grid-template-columns:1fr}}
-</style></head>
+@media(max-width:480px){header{align-items:flex-start}h1{font-size:24px}} .sync-status{font-size:13px;color:#4b5563;margin:8px 0}.sync-actions{display:flex;gap:8px;flex-wrap:wrap}.sync-actions input{flex:1;min-width:180px;padding:12px;border:1px solid #d1d5db;border-radius:12px;font:inherit}.secondary{border:1px solid #d1d5db;border-radius:12px;background:#fff;padding:12px;font:inherit;font-weight:700}.small{font-size:12px;color:#6b7280;line-height:1.5}</style><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script></head>
 <body><main class="app">
 <header><div><div class="ey">MUSCULATION</div><h1>Résistance adaptative</h1></div><button id="reset" class="danger">Réinitialiser</button></header>
+<section class="card"><div class="ey">SYNCHRONISATION</div><h2>Mac ↔ iPhone</h2><div id="syncStatus" class="sync-status">Historique enregistré sur cet appareil.</div><div id="loginArea"><label for="email">Ton adresse e-mail</label><div class="sync-actions"><input id="email" type="email" autocomplete="email" placeholder="toi@exemple.fr"><button id="login" class="secondary">Recevoir le lien</button></div><p class="small">Un lien de connexion sera envoyé par e-mail. Ouvre-le sur l’appareil où tu veux utiliser Muscu. Une fois connecté, l’historique sera synchronisé.</p></div><div id="accountArea" class="hidden"><div id="accountEmail" class="small"></div><button id="logout" class="secondary">Se déconnecter</button></div></section>
 <section class="card"><label>Exercice</label><select id="ex"></select></section>
 <section id="recs" class="card hidden"><div class="ey">POUR CET EXERCICE</div><h2>Résistances conseillées</h2><div id="grid" class="grid"></div></section>
 <section id="work" class="card hidden"><div class="ey">SÉANCE</div><h2 id="title"></h2><label>Équipement</label><select id="eq"></select><div class="box"><div class="ey">RÉSISTANCE</div><div class="controls"><button id="minus" class="round">−</button><div><div id="res" class="big">—</div><div class="hint">niveau réalisable</div></div><button id="plus" class="round">+</button></div></div><button id="start" class="primary">Enregistrer cette séance</button></section>
@@ -134,5 +135,56 @@ function nearest(n,e){let v=vals(e);return v.reduce((a,x)=>Math.abs(x-n)<Math.ab
 function save(){saved.ex=cur.ex;saved.eq=cur.eq;saved.r=cur.r;saved.history=saved.history||[];localStorage.setItem(key,JSON.stringify(saved))}
 function render(){let options=names.map(n=>'<option>'+n+'</option>').join("");$("ex").innerHTML=options;$("ex").value=cur.ex;$("recs").classList.remove("hidden");$("grid").innerHTML=exs[cur.ex].map(x=>'<div class="equip '+(cur.eq===x.e?'sel':'')+'" data-e="'+x.e+'"><div class="name">'+x.e+'</div><div class="sub">Conseillée</div><div class="res">'+rec(x.e)+'</div></div>').join("");document.querySelectorAll(".equip").forEach(x=>x.onclick=()=>{cur.eq=x.dataset.e;cur.r=rec(cur.eq);save();render();$("work").scrollIntoView({behavior:"smooth"})});if(cur.eq){$("work").classList.remove("hidden");$("title").textContent=cur.ex;$("eq").innerHTML=exs[cur.ex].map(x=>'<option>'+x.e+'</option>').join("");$("eq").value=cur.eq;$("res").textContent=cur.r}else $("work").classList.add("hidden");historyRender()}
 function historyRender(){let h=(saved.history||[]).filter(x=>x.ex===cur.ex).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,8);$("hist").classList.toggle("hidden",!h.length);$("history").innerHTML=h.map(x=>'<div class="row"><span>'+x.eq+'<br><small>'+new Date(x.date).toLocaleDateString("fr-FR")+'</small></span><strong>'+x.r+' → '+x.next+'</strong></div>').join("")}
-$("ex").onchange=e=>{cur={ex:e.target.value,eq:null,r:null,active:false};save();render()};$("eq").onchange=e=>{cur.eq=e.target.value;cur.r=rec(cur.eq);save();render()};$("minus").onclick=()=>{let v=vals(cur.eq),i=v.findIndex(x=>x>=cur.r);cur.r=v[Math.max(0,i-1)];save();render()};$("plus").onclick=()=>{let v=vals(cur.eq),i=v.findIndex(x=>x>=cur.r);cur.r=v[Math.min(v.length-1,i+1)];save();render()};$("start").onclick=()=>{$("feedback").classList.remove("hidden");$("feedback").scrollIntoView({behavior:"smooth"})};document.querySelectorAll("[data-r]").forEach(b=>b.onclick=()=>{let v=vals(cur.eq),i=v.findIndex(x=>x>=cur.r),n=cur.r,w=b.dataset.r;if(w==="easy")n=v[i+1]??cur.r;if(w==="impossible")n=v[Math.max(0,i-1)];saved.history=saved.history||[];saved.history.push({date:new Date().toISOString(),ex:cur.ex,eq:cur.eq,r:cur.r,next:n,result:w});cur.r=n;save();$("next").textContent=n;$("why").textContent=w==="easy"?"Facile : +1 niveau.":w==="impossible"?"Impossible : −1 niveau.":"Difficile : même résistance.";$("result").classList.remove("hidden");$("feedback").classList.add("hidden");render();$("result").scrollIntoView({behavior:"smooth"})});$("reset").onclick=()=>{if(confirm("Effacer tout l'historique ?")){saved.history=[];save();render()}};render();
+$("ex").onchange=e=>{cur={ex:e.target.value,eq:null,r:null,active:false};save();render()};$("eq").onchange=e=>{cur.eq=e.target.value;cur.r=rec(cur.eq);save();render()};$("minus").onclick=()=>{let v=vals(cur.eq),i=v.findIndex(x=>x>=cur.r);cur.r=v[Math.max(0,i-1)];save();render()};$("plus").onclick=()=>{let v=vals(cur.eq),i=v.findIndex(x=>x>=cur.r);cur.r=v[Math.min(v.length-1,i+1)];save();render()};$("start").onclick=()=>{$("feedback").classList.remove("hidden");$("feedback").scrollIntoView({behavior:"smooth"})};document.querySelectorAll("[data-r]").forEach(b=>b.onclick=()=>{let v=vals(cur.eq),i=v.findIndex(x=>x>=cur.r),n=cur.r,w=b.dataset.r;if(w==="easy")n=v[i+1]??cur.r;if(w==="impossible")n=v[Math.max(0,i-1)];saved.history=saved.history||[];const entry={date:new Date().toISOString(),ex:cur.ex,eq:cur.eq,r:cur.r,next:n,result:w};saved.history.push(entry);syncInsert(entry);cur.r=n;save();$("next").textContent=n;$("why").textContent=w==="easy"?"Facile : +1 niveau.":w==="impossible"?"Impossible : −1 niveau.":"Difficile : même résistance.";$("result").classList.remove("hidden");$("feedback").classList.add("hidden");render();$("result").scrollIntoView({behavior:"smooth"})});$("reset").onclick=()=>{if(confirm("Effacer tout l'historique ?")){saved.history=[];save();if(cloudUser){cloud.from("workout_history").delete().eq("user_id",cloudUser.id).then(({error})=>{if(error)status("Historique local effacé, mais suppression cloud impossible : "+error.message);else status("Historique effacé sur tous les appareils.")})}render()}};
+const SUPABASE_URL="https://kvddzcyqhmzamqmpoktt.supabase.co";
+const SUPABASE_KEY="sb_publishable_nAe5a-mVA8VgMIgtN1A_IQ_NFlyBA0H";
+const cloud=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+let cloudUser=null, syncing=false;
+function status(msg){$("syncStatus").textContent=msg}
+function showAccount(user){$("loginArea").classList.toggle("hidden",!!user);$("accountArea").classList.toggle("hidden",!user);$("accountEmail").textContent=user?("Connecté : "+user.email):""}
+function toCloud(x){return {user_id:cloudUser.id,exercise:x.ex,equipment:x.eq,resistance:Number(x.r),next_resistance:Number(x.next),result:x.result,created_at:x.date||new Date().toISOString()}}
+async function syncInsert(x){if(!cloudUser)return;try{const {error}=await cloud.from("workout_history").insert(toCloud(x));if(error)throw error;status("Connecté — séance synchronisée.");}catch(e){status("Séance gardée sur cet appareil. Synchronisation : "+(e.message||"erreur"));}}
+async function loadCloudHistory(){
+ if(!cloudUser||syncing)return;syncing=true;
+ try{
+  const {data,error}=await cloud.from("workout_history").select("id,exercise,equipment,resistance,next_resistance,result,created_at").order("created_at",{ascending:true});
+  if(error)throw error;
+  const local=saved.history||[];
+  if((data||[]).length===0&&local.length){
+   status("Import de l’historique existant…");
+   const rows=local.map(toCloud);
+   const {error:insError}=await cloud.from("workout_history").insert(rows);
+   if(insError)throw insError;
+   const {data:again,error:againError}=await cloud.from("workout_history").select("id,exercise,equipment,resistance,next_resistance,result,created_at").order("created_at",{ascending:true});
+   if(againError)throw againError;
+   applyCloudHistory(again||[]);
+  }else{applyCloudHistory(data||[])}
+  status("Connecté — historique synchronisé.");
+ }catch(e){status("Connexion établie, mais sync impossible : "+(e.message||"vérifie la table et les politiques Supabase."));}
+ finally{syncing=false}
+}
+function applyCloudHistory(rows){
+ saved.history=rows.map(x=>({date:x.created_at,ex:x.exercise,eq:x.equipment,r:Number(x.resistance),next:Number(x.next_resistance),result:x.result}));
+ save();render();
+}
+async function initCloud(){
+ try{
+  const {data:{session},error}=await cloud.auth.getSession();if(error)throw error;
+  cloudUser=session?.user||null;showAccount(cloudUser);
+  if(cloudUser)await loadCloudHistory();
+  cloud.auth.onAuthStateChange(async(_event,session)=>{cloudUser=session?.user||null;showAccount(cloudUser);if(cloudUser)await loadCloudHistory();else status("Déconnecté — historique local conservé sur cet appareil.")});
+ }catch(e){status("Mode local disponible. Vérifie la configuration Supabase si tu veux synchroniser.")}
+}
+$("login").onclick=async()=>{
+ const email=$("email").value.trim();if(!email){status("Saisis ton adresse e-mail.");return}
+ $("login").disabled=true;status("Envoi du lien de connexion…");
+ try{const {error}=await cloud.auth.signInWithOtp({email,options:{emailRedirectTo:location.href.split("#")[0]}});if(error)throw error;status("Lien envoyé. Ouvre l’e-mail et clique sur le lien depuis cet appareil.");}
+ catch(e){status("Connexion impossible : "+(e.message||"réessaie."))}
+ finally{$("login").disabled=false}
+};
+$("logout").onclick=async()=>{const {error}=await cloud.auth.signOut();if(error)status("Déconnexion impossible : "+error.message)};
+
+render();
+initCloud();
+if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}));}
 </script></body></html>
